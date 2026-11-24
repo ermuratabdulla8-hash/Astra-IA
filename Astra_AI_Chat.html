@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101018">
+<title>Astra AI</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+:root{--bg:#f5f5f8;--panel:#fff;--text:#171720;--muted:#777786;--line:#e7e7ed;--accent:#7957f5;--user:#7957f5;--bot:#ededf3}
+[data-theme="dark"]{--bg:#101018;--panel:#191923;--text:#f4f2fb;--muted:#aaa7b8;--line:#2c2b39;--bot:#242332}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif;height:100dvh;display:flex;justify-content:center}
+.app{width:100%;max-width:900px;height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
+header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;font-size:19px}.logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(145deg,#9b7cff,#5632cf);display:grid;place-items:center;color:white;font-size:23px;font-weight:900}
+.actions{display:flex;gap:8px}.iconbtn,.send,.voice{border:0;border-radius:12px;padding:10px 12px;background:var(--bot);color:var(--text);font-size:15px;cursor:pointer}
+main{flex:1;overflow:auto;padding:22px 15px 12px}.welcome{text-align:center;margin:12vh auto 24px;max-width:520px}.welcome h1{font-size:30px;margin:0 0 8px}.welcome p{color:var(--muted);margin:0}
+.messages{display:flex;flex-direction:column;gap:14px;max-width:760px;margin:auto}.msg{display:flex;width:100%}.msg.user{justify-content:flex-end}.bubble{max-width:min(82%,650px);padding:12px 15px;border-radius:18px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}.user .bubble{background:var(--user);color:white;border-bottom-right-radius:5px}.assistant .bubble{background:var(--bot);color:var(--text);border-bottom-left-radius:5px}.typing{color:var(--muted);font-size:13px;padding:4px 10px}
+footer{padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}.composer{display:flex;align-items:flex-end;gap:8px;max-width:760px;margin:auto;background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:8px}.composer textarea{flex:1;resize:none;max-height:130px;min-height:42px;border:0;outline:0;background:transparent;color:var(--text);font:15px system-ui;padding:10px}.send{background:var(--accent);color:white;font-weight:700}.hint{text-align:center;color:var(--muted);font-size:11px;margin-top:8px}
+.panel{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center}.panel.open{display:flex}.settings{background:var(--panel);color:var(--text);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:22px;box-shadow:0 -8px 35px #0002}.settings h2{margin:0 0 18px}.settingrow{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}select{padding:9px;border-radius:10px;background:var(--bg);color:var(--text);border:1px solid var(--line)}.close{float:right}
+@media(min-width:700px){.app{border-left:1px solid var(--line);border-right:1px solid var(--line)}footer{padding-bottom:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand"><div class="logo">A</div>ASTRA AI</div><div class="actions"><button class="iconbtn" id="newChat" title="Жаңа чат">＋</button><button class="iconbtn" id="openSettings" title="Баптаулар">⚙</button></div></header>
+<main id="main"><section class="welcome" id="welcome"><h1>Сәлем! Мен Astra AI</h1><p>Сұрағыңды жаз немесе микрофон арқылы сөйле.</p></section><div class="messages" id="messages"></div></main>
+<footer><div class="composer"><button class="voice" id="mic" title="Дауыспен енгізу">🎙</button><textarea id="prompt" rows="1" placeholder="Astra-ға хабарлама жаз..."></textarea><button class="send" id="send">➤</button></div><div class="hint">Astra AI қателесуі мүмкін. Маңызды ақпаратты тексер.</div></footer>
+</div>
+<div class="panel" id="panel"><div class="settings"><button class="iconbtn close" id="closeSettings">✕</button><h2>Баптаулар</h2><div class="settingrow"><span>Түс режимі</span><select id="theme"><option value="light">Ақ режим</option><option value="dark">Қара режим</option></select></div><div class="settingrow"><span>Жауапты дауыстап оқу</span><select id="tts"><option value="off">Өшірулі</option><option value="on">Қосулы</option></select></div><div class="settingrow"><span>Чат тарихы</span><button class="iconbtn" id="clearHistory">Тазалау</button></div><p style="color:var(--muted);font-size:12px">Дауыспен енгізу браузердің қолдауына байланысты жұмыс істейді.</p></div></div>
+<script>
+const $=id=>document.getElementById(id), messages=$('messages');
+let history=JSON.parse(localStorage.getItem('astra_history')||'[]');
+let tts=localStorage.getItem('astra_tts')||'off';
+function setTheme(v){document.documentElement.dataset.theme=v==='dark'?'dark':'light';$('theme').value=v;localStorage.setItem('astra_theme',v)}
+setTheme(localStorage.getItem('astra_theme')||'dark');$('tts').value=tts;
+function save(){localStorage.setItem('astra_history',JSON.stringify(history))}
+function render(){messages.innerHTML='';$('welcome').style.display=history.length?'none':'block';history.forEach(m=>addBubble(m.role,m.content,false));$('main').scrollTop=$('main').scrollHeight}
+function addBubble(role,content,scroll=true){let row=document.createElement('div');row.className='msg '+(role==='user'?'user':'assistant');let b=document.createElement('div');b.className='bubble';b.textContent=content;row.appendChild(b);messages.appendChild(row);if(scroll)$('main').scrollTop=$('main').scrollHeight}
+async function send(){let text=$('prompt').value.trim();if(!text)return;$('prompt').value='';$('prompt').style.height='42px';$('welcome').style.display='none';history.push({role:'user',content:text});addBubble('user',text);save();let wait=document.createElement('div');wait.className='typing';wait.textContent='Astra жауап дайындап жатыр…';messages.appendChild(wait);$('main').scrollTop=$('main').scrollHeight;$('send').disabled=true;
+try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});let data=await r.json();if(!r.ok)throw new Error(data.error||'Сервер қатесі');let answer=data.reply||'Жауап алынбады.';wait.remove();history.push({role:'assistant',content:answer});addBubble('assistant',answer);save();if(tts==='on'&&'speechSynthesis'in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(answer))}}
+catch(e){wait.remove();addBubble('assistant','Қосылу қатесі: '+e.message+'\nСервердің жарияланғанын және API кілтінің орнатылғанын тексер.')}
+finally{$('send').disabled=false}}
+$('send').onclick=send;$('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});$('prompt').addEventListener('input',e=>{e.target.style.height='42px';e.target.style.height=Math.min(e.target.scrollHeight,130)+'px'});
+$('newChat').onclick=()=>{history=[];save();render()};$('openSettings').onclick=()=>$('panel').classList.add('open');$('closeSettings').onclick=()=>$('panel').classList.remove('open');$('panel').onclick=e=>{if(e.target===$('panel'))$('panel').classList.remove('open')};
+$('theme').onchange=e=>setTheme(e.target.value);$('tts').onchange=e=>{tts=e.target.value;localStorage.setItem('astra_tts',tts)};$('clearHistory').onclick=()=>{if(confirm('Чат тарихын тазалайсың ба?')){history=[];save();render()}};
+$('mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Бұл браузер дауыспен енгізуді қолдамайды. Chrome қолданып көр.');return}let rec=new SR();rec.lang='kk-KZ';rec.interimResults=false;rec.onresult=e=>{$('prompt').value=($('prompt').value+' '+e.results[0][0].transcript).trim()};rec.onerror=()=>alert('Микрофонға рұқсат берілгенін тексер.');rec.start()};
+if('serviceWorker'in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('/sw.js').catch(()=>{});
+render();
+</script>
+</body></html>
